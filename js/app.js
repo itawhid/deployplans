@@ -1,6 +1,6 @@
 let deploymentPlansDefault = [];
 
-const loadJSON = (path, success, error) => {
+const loadJSON = (path, success, error) => {          //loading JSON Data
   const xhr = new XMLHttpRequest();
   xhr.onreadystatechange = () => {
       if (xhr.readyState === XMLHttpRequest.DONE) {
@@ -19,7 +19,6 @@ const loadJSON = (path, success, error) => {
 
 loadJSON('data.json',
     data => {
-        console.log(data);
         deploymentPlansDefault = data.deploymentPlans;
         buildDeploymentPlans(deploymentPlansDefault);
     },
@@ -28,45 +27,44 @@ loadJSON('data.json',
     }
 );
 
-const buildDeploymentPlans = (deploymentPlansDefault) => {
+const buildDeploymentPlans = (deploymentPlansDefault) => {                                      
   const deploymentPlansWrapper = document.getElementById('deployment-plans-wrapper');
-  const deploymentPlans = deploymentPlansDefault.map((plan, planIndex) => {
-      const deployments = plan.deployments.map((deployment, deploymentIndex) => {
+  const deploymentPlans = deploymentPlansDefault.map( plan => {                             // handling deployment plans information
+      const device = plan.deployments.map( deployment => {                            //handling Device information
           let affectedSoftComps = [];
-          for (const log of deployment.device.actionLog) {
+          for (const log of deployment.device.actionLog) {                                //taking software components to install
               if (log.action === 'install') {
                   affectedSoftComps.push(log.affectedSoftwareComponent.externalId);
               }
           }
           affectedSoftComps = [...new Set(affectedSoftComps)];
 
-          const softwareComponents = deployment.softwareComponents.map(softwareComponent => {
+          const softwareComponents = deployment.softwareComponents.map( softwareComponent => {   //handling software components information
               let status = '';
               if (affectedSoftComps.includes(softwareComponent.externalId)) {
                   status = 'checked disabled';
               }
 
-              return getSoftwareComponentHTML(softwareComponent, status, planIndex, deploymentIndex);
+              return getSoftwareComponentHTML(softwareComponent, status);
           });
 
-          return getDeploymentHTML(deployment, softwareComponents);
+          return getDeviceHTML(deployment, softwareComponents);
       });
 
-      return getPlanHTML(plan, deployments);
+      return getPlanHTML(plan, device);
   });
 
   deploymentPlansWrapper.insertAdjacentHTML('beforeend', deploymentPlans.join(''));
 };
 
-const getSoftwareComponentHTML = (softwareComponent, status, planIndex, deploymentIndex) => {
+const getSoftwareComponentHTML = (softwareComponent, status) => {          //software components cntainer view
   return `<div class="col-6">
       <div class="card">
           <div class="card-body">
               <h4>${softwareComponent.name}</h4>
               <p>${softwareComponent.version}</p>
               <div class="form-check">
-                  <input class='form-check-input' type='checkbox' id='check_install_status'
-                      onclick='installComponent(${JSON.stringify(softwareComponent)}, ${planIndex}, ${deploymentIndex})' ${status}>
+                  <input class='form-check-input' type='checkbox' id='check_install_status' ${status}>
                   <label class="form-check-label" for="check_install_status">
                       Installed
                   </label>
@@ -76,7 +74,7 @@ const getSoftwareComponentHTML = (softwareComponent, status, planIndex, deployme
   </div>`;
 }
 
-const getDeploymentHTML = (deployment, softwareComponents) => {
+const getDeviceHTML = (deployment, softwareComponents) => {           //Device container view
     return `<div class="col-6">
         <div class="card">
             <div class="card-header">
@@ -92,16 +90,16 @@ const getDeploymentHTML = (deployment, softwareComponents) => {
     </div>`;
 };
 
-const getPlanHTML = (plan, deployments) => {
+const getPlanHTML = (plan, devices) => {                      //main plan wrapper view
     return `<div class="col-12">
-        <div class="card border-success mb-4 ${plan.locked ? 'text-muted' : 'text-success'}">
-            <div class="card-header">
+        <div class="card border-success mb-4">
+            <div class="card-header  ${plan.locked ? 'text-muted' : 'text-success'}">
                 <h2>${plan.name}</h2>
                 <p>${plan.description}</p>
             </div>
             <div class="card-body">
                 <div class="row">
-                    ${deployments.join('')}
+                    ${devices.join('')}
                 </div>
             </div>            
         </div>
