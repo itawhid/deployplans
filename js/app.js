@@ -92,8 +92,8 @@ const getDeviceHTML = (deployment, softwareComponents) => {           //Device c
 
 const getPlanHTML = (plan, devices) => {                      //main plan wrapper view
     return `<div class="col-12">
-        <div class="card border-success mb-4">
-            <div class="card-header  ${plan.locked ? 'text-muted' : 'text-success'}">
+        <div class="card ${plan.locked ? 'border-dark' : 'border-success'} mb-4">
+            <div class="card-header ${plan.locked ? 'text-muted' : 'text-success'}">
                 <h2>${plan.name}</h2>
                 <p>${plan.description}</p>
             </div>
