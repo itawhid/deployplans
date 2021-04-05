@@ -27,6 +27,52 @@ loadJSON('data.json',
     }
 );
 
+const buildDeploymentPlans = (deploymentPlansDefault) => {
+  const deploymentPlansWrapper = document.getElementById('deployment-plans-wrapper');
+  const deploymentPlans = deploymentPlansDefault.map((plan, planIndex) => {
+      const deployments = plan.deployments.map((deployment, deploymentIndex) => {
+          let affectedSoftComps = [];
+          for (const log of deployment.device.actionLog) {
+              if (log.action === 'install') {
+                  affectedSoftComps.push(log.affectedSoftwareComponent.externalId);
+              }
+          }
+          affectedSoftComps = [...new Set(affectedSoftComps)];
+
+          const softwareComponents = deployment.softwareComponents.map(softwareComponent => {
+              let status = '';
+              if (affectedSoftComps.includes(softwareComponent.externalId)) {
+                  status = 'checked disabled';
+              }
+
+              return getSoftwareComponentHTML(softwareComponent, status, planIndex, deploymentIndex);
+          });
+
+          return getDeploymentHTML(deployment, softwareComponents);
+      });
+
+      return getPlanHTML(plan, deployments);
+  });
+
+  deploymentPlansWrapper.insertAdjacentHTML('beforeend', deploymentPlans.join(''));
+};
+
+
+const getDeploymentHTML = (deployment, softwareComponents) => {
+    return `<div class="col-6">
+        <div class="card">
+            <div class="card-header">
+                <h3>${deployment.device.name}</h3>
+                <p>${deployment.device.description}</p>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    ${softwareComponents.join('')}
+                </div>
+            </div>            
+        </div>
+    </div>`;
+};
 
 const getPlanHTML = (plan, deployments) => {
     return `<div class="col-12">
