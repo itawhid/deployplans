@@ -21,11 +21,42 @@ loadJSON('data.json',
     data => {
         console.log(data);
         deploymentPlansDefault = data.deploymentPlans;
+        buildDeploymentPlans(deploymentPlansDefault);
     },
     xhr => {
         console.error(xhr);
     }
 );
+
+const buildDeploymentPlans = (deploymentPlansDefault) => {
+  const deploymentPlansWrapper = document.getElementById('deployment-plans-wrapper');
+  const deploymentPlans = deploymentPlansDefault.map((plan, planIndex) => {
+      const deployments = plan.deployments.map((deployment, deploymentIndex) => {
+          let affectedSoftComps = [];
+          for (const log of deployment.device.actionLog) {
+              if (log.action === 'install') {
+                  affectedSoftComps.push(log.affectedSoftwareComponent.externalId);
+              }
+          }
+          affectedSoftComps = [...new Set(affectedSoftComps)];
+
+          const softwareComponents = deployment.softwareComponents.map(softwareComponent => {
+              let status = '';
+              if (affectedSoftComps.includes(softwareComponent.externalId)) {
+                  status = 'checked disabled';
+              }
+
+              return getSoftwareComponentHTML(softwareComponent, status, planIndex, deploymentIndex);
+          });
+
+          return getDeploymentHTML(deployment, softwareComponents);
+      });
+
+      return getPlanHTML(plan, deployments);
+  });
+
+  deploymentPlansWrapper.insertAdjacentHTML('beforeend', deploymentPlans.join(''));
+};
 
 const getSoftwareComponentHTML = (softwareComponent, status, planIndex, deploymentIndex) => {
   return `<div class="col-6">
