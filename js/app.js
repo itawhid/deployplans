@@ -1,8 +1,8 @@
 let deploymentPlansDefault = [];
 
 const loadJSON = (path, success, error) => {
-  var xhr = new XMLHttpRequest();
-  xhr.onreadystatechange = function() {
+  const xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = () => {
       if (xhr.readyState === XMLHttpRequest.DONE) {
           if (xhr.status === 200) {
               if (success)
