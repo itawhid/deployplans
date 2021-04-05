@@ -94,7 +94,7 @@ const getDeploymentHTML = (deployment, softwareComponents) => {
 
 const getPlanHTML = (plan, deployments) => {
     return `<div class="col-12">
-        <div class="card border-success mb-4">
+        <div class="card border-success mb-4 ${plan.locked ? 'text-muted' : 'text-success'}">
             <div class="card-header">
                 <h2>${plan.name}</h2>
                 <p>${plan.description}</p>
