@@ -27,52 +27,76 @@ loadJSON('data.json',
     }
 );
 
-const buildDeploymentPlans = (deploymentPlansDefault) => {                                      
-  const deploymentPlansWrapper = document.getElementById('deployment-plans-wrapper');
-  const deploymentPlans = deploymentPlansDefault.map( plan => {                             // handling deployment plans information
-      const device = plan.deployments.map( deployment => {                            //handling Device information
-          let affectedSoftComps = [];
-          for (const log of deployment.device.actionLog) {                                //taking software components to install
-              if (log.action === 'install') {
-                  affectedSoftComps.push(log.affectedSoftwareComponent.externalId);
-              }
-          }
-          affectedSoftComps = [...new Set(affectedSoftComps)];
+const buildDeploymentPlans = (plans) => {
+    const deploymentPlansWrapper = document.getElementById('deployment-plans-wrapper');
+    const deploymentPlans = plans.map((plan, planIndex) => {                    //Handling Plan information
+        const devices = plan.deployments.map((deployment, deploymentIndex) => { //Handling Device information
+            let affectedSoftComps = [];
+            for (const log of deployment.device.actionLog) {
+                if (log.action === 'install') {
+                    affectedSoftComps.push(log.affectedSoftwareComponent.externalId);
+                }
+            }
+            affectedSoftComps = [...new Set(affectedSoftComps)];
 
-          const softwareComponents = deployment.softwareComponents.map( softwareComponent => {   //handling software components information
-              let status = '';
-              if (affectedSoftComps.includes(softwareComponent.externalId)) {
-                  status = 'checked disabled';
-              }
+            const softwareComponents = deployment.softwareComponents.map(softwareComponent => {  //Handling components information
+                let status = '';
+                if (affectedSoftComps.includes(softwareComponent.externalId)) {
+                    status = 'checked disabled';
+                }
 
-              return getSoftwareComponentHTML(softwareComponent, status);
-          });
+                return getSoftwareComponentHTML(softwareComponent, status, planIndex, deploymentIndex);
+            });
 
-          return getDeviceHTML(deployment, softwareComponents);
-      });
+            return getDeviceHTML(deployment, softwareComponents);
+        });
 
-      return getPlanHTML(plan, device);
-  });
+        return getPlanHTML(plan, devices);
+    });
 
-  deploymentPlansWrapper.insertAdjacentHTML('beforeend', deploymentPlans.join(''));
+    deploymentPlansWrapper.innerHTML = deploymentPlans.join('');
 };
 
-const getSoftwareComponentHTML = (softwareComponent, status) => {          //software components cntainer view
-  return `<div class="col-6">
-      <div class="card">
-          <div class="card-body">
-              <h4>${softwareComponent.name}</h4>
-              <p>${softwareComponent.version}</p>
-              <div class="form-check">
-                  <input class='form-check-input' type='checkbox' id='check_install_status' ${status}>
-                  <label class="form-check-label" for="check_install_status">
-                      Installed
-                  </label>
-              </div>
-          </div>            
-      </div>
-  </div>`;
-}
+const installComponentHandler = (component, planIndex, deploymentIndex) => {       //updating action log after clicking installed
+    let deploymentPlans = [...deploymentPlansDefault];
+    const logDateTime = new Date();
+    const actionDetails = {
+        "action": "install",
+        "affectedSoftwareComponent": {
+            "externalId": component.externalId,
+            "externalVersionId": component.externalVersionId,
+            "name": component.name,
+            "version": component.version,
+        },
+        "executor": {
+            "email": "another.one@email.com",
+            "externalId": "2",
+            "name": "Another One"
+        },
+        "timestamp": logDateTime.toISOString()
+    };
+    deploymentPlans[planIndex].deployments[deploymentIndex].device.actionLog.push(actionDetails);
+    deploymentPlansDefault = [...deploymentPlans];
+    buildDeploymentPlans(deploymentPlansDefault);
+};
+
+const getSoftwareComponentHTML = (softwareComponent, status, planIndex, deploymentIndex) => {  //component container view
+    return `<div class="col-6">
+        <div class="card">
+            <div class="card-body">
+                <h4>${softwareComponent.name}</h4>
+                <p>${softwareComponent.version}</p>
+                <div class="form-check">
+                    <input class='form-check-input' type='checkbox' id='check_install_status'
+                        onclick='installComponentHandler(${JSON.stringify(softwareComponent)}, ${planIndex}, ${deploymentIndex})' ${status}>
+                    <label class="form-check-label" for="check_install_status">
+                        Installed
+                    </label>
+                </div>
+            </div>            
+        </div>
+    </div>`;
+};
 
 const getDeviceHTML = (deployment, softwareComponents) => {           //Device container view
     return `<div class="col-6">
@@ -90,10 +114,10 @@ const getDeviceHTML = (deployment, softwareComponents) => {           //Device c
     </div>`;
 };
 
-const getPlanHTML = (plan, devices) => {                      //main plan wrapper view
+const getPlanHTML = (plan, devices) => {                      //plans container view
     return `<div class="col-12">
-        <div class="card border-success mb-4">
-            <div class="card-header  ${plan.locked ? 'text-muted' : 'text-success'}">
+        <div class="card ${plan.locked ? 'border-dark' : 'border-success'} mb-4">
+            <div class="card-header ${plan.locked ? 'text-muted' : 'text-success'}">
                 <h2>${plan.name}</h2>
                 <p>${plan.description}</p>
             </div>
@@ -104,4 +128,4 @@ const getPlanHTML = (plan, devices) => {                      //main plan wrappe
             </div>            
         </div>
     </div>`;
-}
+};
